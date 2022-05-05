@@ -8,6 +8,7 @@ public interface WalletService {
     Flux<Wallet> findAll();
     Mono<Wallet> findById(String id);
     Mono<Wallet> save(Wallet wallet);
+    Mono<Wallet> validateTransaction(String transactionId,String walletId);
     Mono<Wallet> update(Wallet wallet,String id);
     Mono<String> delete(String id);
 }

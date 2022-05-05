@@ -1,5 +1,6 @@
 package com.demo.app.bootcoin.services.impl;
 
+import com.demo.app.bootcoin.entities.Status;
 import com.demo.app.bootcoin.entities.Transaction;
 import com.demo.app.bootcoin.repositories.TransactionRepository;
 import com.demo.app.bootcoin.services.TransactionService;
@@ -31,6 +32,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional
     @Override
     public Mono<Transaction> save(Transaction transaction) {
+        transaction.setStatus(Status.PENDING);
         return transactionRepository.save(transaction);
     }
 

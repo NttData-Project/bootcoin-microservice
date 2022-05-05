@@ -22,6 +22,9 @@ public class Transaction {
     @Field(name = "from_account")
     private String fromAccount;
 
+    @Enumerated(EnumType.STRING)
+    private PaymentType paymentType;
+
     @NotEmpty
     @Field(name = "to_account")
     private String toAccount;

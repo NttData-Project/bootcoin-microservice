@@ -4,6 +4,7 @@ import com.demo.app.bootcoin.entities.Transaction;
 import com.demo.app.bootcoin.services.TransactionService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -14,8 +15,11 @@ import reactor.core.publisher.Mono;
 public class TransactionController {
     private final TransactionService transactionService;
 
-    public TransactionController(TransactionService transactionService) {
+    private final KafkaTemplate<String,String> kafkaTemplate;
+
+    public TransactionController(TransactionService transactionService, KafkaTemplate<String, String> kafkaTemplate) {
         this.transactionService = transactionService;
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     @GetMapping
@@ -29,7 +33,9 @@ public class TransactionController {
     }
 
     @PostMapping
-    public ResponseEntity<Mono<Transaction>> saveExchangeRate(@RequestBody Transaction transaction) {
+    public ResponseEntity<Mono<Transaction>> save(@RequestBody Transaction transaction) {
+        kafkaTemplate.send("bootcoin","Cuenta que realiza el pago: "+transaction.getFromAccount()
+        +"Cuenta que recibe el pago: " + transaction.getToAccount() +"Monto : " +transaction.getAmount());
         return ResponseEntity.ok(transactionService.save(transaction));
     }
 

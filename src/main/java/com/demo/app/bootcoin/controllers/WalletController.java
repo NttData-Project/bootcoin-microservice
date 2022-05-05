@@ -29,8 +29,13 @@ public class WalletController {
     }
 
     @PostMapping
-    public ResponseEntity<Mono<Wallet>> saveExchangeRate(@RequestBody Wallet wallet) {
+    public ResponseEntity<Mono<Wallet>> save(@RequestBody Wallet wallet) {
         return ResponseEntity.ok(walletService.save(wallet));
+    }
+
+    @GetMapping("/wallet/{walletId}/transaction/{transactionId}")
+    public Mono<ResponseEntity<Wallet>> validateTransaction(@PathVariable String walletId,@PathVariable String transactionId) {
+        return walletService.validateTransaction(transactionId,walletId).map(ResponseEntity::ok).defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")

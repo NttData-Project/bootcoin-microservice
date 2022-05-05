@@ -41,6 +41,8 @@ public class TransactionController {
 
     @PutMapping("/{id}")
     public Mono<ResponseEntity<Transaction>> update(@RequestBody Transaction transaction, @PathVariable String id) {
+        kafkaTemplate.send("bootcoin","Cuenta que realiza el pago: "+transaction.getFromAccount()
+                +"Cuenta que recibe el pago: " + transaction.getToAccount() +"Monto : " +transaction.getAmount());
         return transactionService.update(transaction, id).map(ResponseEntity::ok).defaultIfEmpty(ResponseEntity.notFound().build());
     }
 

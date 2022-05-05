@@ -14,7 +14,7 @@ import javax.validation.constraints.NotEmpty;
 @JsonPropertyOrder({"id","fromAccount","toAccount","amount","status","createdAt","updateAt"})
 @Document(collection = "transaction")
 @Data
-public class Transaction {
+public class Transaction extends Audit{
     @Id
     private String id;
 

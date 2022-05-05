@@ -1,4 +1,4 @@
-package com.demo.app.bootcoin.config;
+package com.demo.app.bootcoin.config.kafka;
 
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.context.annotation.Bean;

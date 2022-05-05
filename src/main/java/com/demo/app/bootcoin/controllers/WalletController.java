@@ -4,6 +4,7 @@ import com.demo.app.bootcoin.entities.Wallet;
 import com.demo.app.bootcoin.services.WalletService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -14,8 +15,11 @@ import reactor.core.publisher.Mono;
 public class WalletController {
     private final WalletService walletService;
 
-    public WalletController(WalletService walletService) {
+    private final KafkaTemplate<String,String> kafkaTemplate;
+
+    public WalletController(WalletService walletService, KafkaTemplate<String, String> kafkaTemplate) {
         this.walletService = walletService;
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     @GetMapping
@@ -30,6 +34,7 @@ public class WalletController {
 
     @PostMapping
     public ResponseEntity<Mono<Wallet>> save(@RequestBody Wallet wallet) {
+        kafkaTemplate.send("bootcoin","Cuenta:"+ wallet.getDocumentNumber()+"dinero: "+wallet.getBalance());
         return ResponseEntity.ok(walletService.save(wallet));
     }
 

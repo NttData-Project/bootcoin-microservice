@@ -1,4 +1,4 @@
-package com.demo.app.bootcoin.config;
+package com.demo.app.bootcoin.config.kafka;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;

@@ -1,4 +1,4 @@
-package com.demo.app.bootcoin.config;
+package com.demo.app.bootcoin.config.kafka;
 
 
 import org.springframework.kafka.annotation.KafkaListener;

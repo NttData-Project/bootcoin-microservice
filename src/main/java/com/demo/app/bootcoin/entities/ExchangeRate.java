@@ -6,7 +6,7 @@ import org.springframework.data.redis.core.RedisHash;
 
 @RedisHash("ExchangeRate")
 @Data
-public class ExchangeRate {
+public class ExchangeRate extends Audit{
     @Id
     private String id;
     private Double salePrice;

@@ -12,7 +12,7 @@ import javax.validation.constraints.NotEmpty;
 @JsonPropertyOrder({"id","documentNumber","phoneNumber","email","balance","createdAt","updateAt"})
 @Document(collection = "wallet")
 @Data
-public class Wallet {
+public class Wallet extends Audit{
     @Id
     private String id;
 

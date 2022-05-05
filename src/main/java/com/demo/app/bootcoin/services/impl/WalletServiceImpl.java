@@ -35,25 +35,9 @@ public class WalletServiceImpl implements WalletService {
         return webClientPassiveCard.get().uri("/currentAccount/identifier/" + dni).
                 retrieve().bodyToMono(CurrentAccount.class);
     }
-    private Mono<SavingAccount> findSavingAccountByDni(String dni){
-        return webClientPassiveCard.get().uri("/savingAccount/identifier/" + dni).
-                retrieve().bodyToMono(SavingAccount.class);
-    }
-    private Mono<FixedTermAccount> findFixedTermAccountByDni(String dni){
-        return webClientPassiveCard.get().uri("/fixedTermAccount/identifier/" + dni).
-                retrieve().bodyToMono(FixedTermAccount.class);
-    }
 
     private Mono<CurrentAccount> updateCurrentAccount(CurrentAccount currentAccount) {
         return webClientPassiveCard.put().uri("/currentAccount/" + currentAccount.getId()).body(Mono.just(currentAccount), CurrentAccount.class).retrieve().bodyToMono(CurrentAccount.class);
-    }
-
-    private Mono<SavingAccount> updateSavingAccount(SavingAccount savingAccount) {
-        return webClientPassiveCard.put().uri("/savingAccount/" + savingAccount.getId()).body(Mono.just(savingAccount), SavingAccount.class).retrieve().bodyToMono(SavingAccount.class);
-    }
-
-    private Mono<FixedTermAccount> updateFixedTermAccount(FixedTermAccount fixedTermAccount) {
-        return webClientPassiveCard.put().uri("/fixedTermAccount/" + fixedTermAccount.getId()).body(Mono.just(fixedTermAccount), FixedTermAccount.class).retrieve().bodyToMono(FixedTermAccount.class);
     }
 
     @Override
@@ -74,34 +58,23 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public Mono<Wallet> validateTransaction(String transactionId,String walletId) {
         Mono<Transaction> transaction = transactionRepository.findById(transactionId);
-        Mono<Wallet> wallet = walletRepository.findById(walletId).flatMap(w->{
-            return transaction.flatMap(t->{
-                if(t.getPaymentType().equals(PaymentType.YANKI)) {
-                    if(w.getBalance() > t.getAmount()) {
-                        w.setBalance(w.getBalance() - t.getAmount());
-                        t.setStatus(Status.PROCESSED);
-                    } else {
-                        t.setStatus(Status.REJECTED);
-                        return Mono.error(new CustomNotFoundException("El usuario no tiene suficiente credito"));
-                    }
+        Mono<Wallet> wallet = walletRepository.findById(walletId).flatMap(w-> transaction.flatMap(t->{
+            if(t.getPaymentType().equals(PaymentType.YANKI)) {
+                if(w.getBalance() > t.getAmount()) {
+                    w.setBalance(w.getBalance() - t.getAmount());
+                    t.setStatus(Status.PROCESSED);
+                } else {
+                    t.setStatus(Status.REJECTED);
+                    return Mono.error(new CustomNotFoundException("El usuario no tiene suficiente credito"));
                 }
-                else{
-                    Mono<CurrentAccount> currentAccount = findCurrentAccountByDni(w.getDocumentNumber());
-                    Mono<SavingAccount> savingAccount = findSavingAccountByDni(w.getDocumentNumber());
-                    Mono<FixedTermAccount> fixedTermAccount = findFixedTermAccountByDni(w.getPhoneNumber());
-                   if(currentAccount.hasElement().equals(true)){
-                      return currentAccount.flatMap(x->updateCurrentAccount(x)).then(walletRepository.save(w));
-                   }
-                   if(savingAccount.hasElement().equals(true)){
-                        return savingAccount.flatMap(x->updateSavingAccount(x)).then(walletRepository.save(w));
-                   }
-                   if(fixedTermAccount.hasElement().equals(true)){
-                        return fixedTermAccount.flatMap(x->updateFixedTermAccount(x)).then(walletRepository.save(w));
-                   }
-                }
-                return Mono.just(w);
-            });
-        });
+                return transactionRepository.save(t).then(walletRepository.save(w));
+            }
+            else{
+                Mono<CurrentAccount> currentAccount = findCurrentAccountByDni(w.getDocumentNumber());
+                t.setStatus(Status.PROCESSED);
+                return currentAccount.flatMap(this::updateCurrentAccount).then(transactionRepository.save(t)).then(walletRepository.save(w));
+            }
+        }));
         return wallet;
     }
 

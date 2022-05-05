@@ -17,6 +17,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
+
 @Service
 public class WalletServiceImpl implements WalletService {
 
@@ -72,7 +74,10 @@ public class WalletServiceImpl implements WalletService {
             else{
                 Mono<CurrentAccount> currentAccount = findCurrentAccountByDni(w.getDocumentNumber());
                 t.setStatus(Status.PROCESSED);
-                return currentAccount.flatMap(this::updateCurrentAccount).then(transactionRepository.save(t)).then(walletRepository.save(w));
+                return currentAccount.flatMap(x->{
+                    x.setBalance(x.getBalance().add(BigDecimal.valueOf(t.getAmount()).negate()));
+                    return updateCurrentAccount(x);
+                }).then(transactionRepository.save(t)).then(walletRepository.save(w));
             }
         }));
         return wallet;

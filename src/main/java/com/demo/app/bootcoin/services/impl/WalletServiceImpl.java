@@ -1,15 +1,11 @@
 package com.demo.app.bootcoin.services.impl;
 
-import com.demo.app.bootcoin.entities.PaymentType;
-import com.demo.app.bootcoin.entities.Status;
-import com.demo.app.bootcoin.entities.Transaction;
-import com.demo.app.bootcoin.entities.Wallet;
+import com.demo.app.bootcoin.entities.*;
 import com.demo.app.bootcoin.entities.models.CurrentAccount;
-import com.demo.app.bootcoin.entities.models.FixedTermAccount;
-import com.demo.app.bootcoin.entities.models.SavingAccount;
 import com.demo.app.bootcoin.exception.CustomNotFoundException;
 import com.demo.app.bootcoin.repositories.TransactionRepository;
 import com.demo.app.bootcoin.repositories.WalletRepository;
+import com.demo.app.bootcoin.services.ExchangeRateService;
 import com.demo.app.bootcoin.services.WalletService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,11 +20,13 @@ public class WalletServiceImpl implements WalletService {
 
     private final WalletRepository walletRepository;
     private final WebClient webClientPassiveCard;
+    private final ExchangeRateService exchangeRateService;
     private final TransactionRepository transactionRepository;
 
-    public WalletServiceImpl(WalletRepository walletRepository, TransactionRepository transactionRepository,WebClient.Builder webClientPassiveCard
-            ,@Value("${passive.card}") String passiveCardUrl) {
+    public WalletServiceImpl(WalletRepository walletRepository, TransactionRepository transactionRepository, WebClient.Builder webClientPassiveCard
+            , @Value("${passive.card}") String passiveCardUrl, ExchangeRateService exchangeRateService) {
         this.walletRepository = walletRepository;
+        this.exchangeRateService = exchangeRateService;
         this.webClientPassiveCard = webClientPassiveCard.baseUrl(passiveCardUrl).build();
         this.transactionRepository = transactionRepository;
     }
@@ -60,27 +58,29 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public Mono<Wallet> validateTransaction(String transactionId,String walletId) {
         Mono<Transaction> transaction = transactionRepository.findById(transactionId);
-        Mono<Wallet> wallet = walletRepository.findById(walletId).flatMap(w-> transaction.flatMap(t->{
+        Mono<ExchangeRate> exchange = exchangeRateService.findById("100");
+        return exchange.flatMap(e-> transaction.flatMap(t-> walletRepository.findById(t.getFromAccount()).flatMap(w1-> walletRepository.findById(t.getToAccount()).flatMap(w2->{
             if(t.getPaymentType().equals(PaymentType.YANKI)) {
-                if(w.getBalance() > t.getAmount()) {
-                    w.setBalance(w.getBalance() - t.getAmount());
+                if(w1.getBalance() > t.getAmount()) {
+                    w1.setBalance(w1.getBalance() - (t.getAmount()*e.getSalePrice()));
+                    w2.setBalance(w2.getBalance() + (t.getAmount()*e.getPurchasePrice()));
                     t.setStatus(Status.PROCESSED);
                 } else {
                     t.setStatus(Status.REJECTED);
                     return Mono.error(new CustomNotFoundException("El usuario no tiene suficiente credito"));
                 }
-                return transactionRepository.save(t).then(walletRepository.save(w));
+                return transactionRepository.save(t).then(walletRepository.save(w1)).then(walletRepository.save(w2));
             }
             else{
-                Mono<CurrentAccount> currentAccount = findCurrentAccountByDni(w.getDocumentNumber());
+                Mono<CurrentAccount> currentAccount = findCurrentAccountByDni(w1.getDocumentNumber());
+                w2.setBalance(w2.getBalance() + (t.getAmount()*e.getPurchasePrice()));
                 t.setStatus(Status.PROCESSED);
                 return currentAccount.flatMap(x->{
-                    x.setBalance(x.getBalance().add(BigDecimal.valueOf(t.getAmount()).negate()));
+                    x.setBalance(x.getBalance().add(BigDecimal.valueOf(t.getAmount()*e.getSalePrice()).negate()));
                     return updateCurrentAccount(x);
-                }).then(transactionRepository.save(t)).then(walletRepository.save(w));
+                }).then(transactionRepository.save(t)).then(walletRepository.save(w1)).then(walletRepository.save(w2));
             }
-        }));
-        return wallet;
+        }))));
     }
 
     @Override

@@ -6,6 +6,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 
@@ -27,6 +29,6 @@ public class Transaction {
     @Min(value = 1)
     private Double amount;
 
-    @NotEmpty
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private Status status;
 }

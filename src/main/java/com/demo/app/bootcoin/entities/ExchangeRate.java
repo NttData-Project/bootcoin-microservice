@@ -3,7 +3,7 @@ package com.demo.app.bootcoin.entities;
 import lombok.Data;
 import org.springframework.data.redis.core.RedisHash;
 
-@RedisHash("exchange")
+@RedisHash("ExchangeRate")
 @Data
 public class ExchangeRate {
     private Double salePrice;

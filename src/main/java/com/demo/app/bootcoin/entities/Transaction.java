@@ -12,7 +12,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 
 @JsonPropertyOrder({"id","fromAccount","toAccount","amount","status","createdAt","updateAt"})
-@Document(collection = "transaction")
+@Document(collection = "transaction_wallet")
 @Data
 public class Transaction extends Audit{
     @Id

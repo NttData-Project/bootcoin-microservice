@@ -9,5 +9,5 @@ public interface ExchangeRateService {
     Mono<ExchangeRate> findById(String id);
     Mono<ExchangeRate> save(ExchangeRate exchangeRate);
     Mono<ExchangeRate> update(ExchangeRate exchangeRate,String id);
-    Mono<String> delete(String id);
+    Mono<Void> delete(String id);
 }

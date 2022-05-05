@@ -1,5 +1,6 @@
 package com.demo.app.bootcoin.config;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.mapping.event.ValidatingMongoEventListener;
@@ -16,16 +17,16 @@ import java.time.Duration;
 @Configuration
 public class ValidatorConfiguration {
 
-    @Bean
+    @Bean(name = "listener")
     public ValidatingMongoEventListener validatingMongoEventListener() {
         return new ValidatingMongoEventListener(validator());
     }
-    @Bean
+    @Bean(name = "validator")
     public LocalValidatorFactoryBean validator() {
         return new LocalValidatorFactoryBean();
     }
 
-    @Bean
+    @Bean(name = "redisFactory")
     public ReactiveRedisConnectionFactory lettuceConnectionFactory() {
 
         LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
@@ -37,8 +38,8 @@ public class ValidatorConfiguration {
         return new LettuceConnectionFactory(new RedisStandaloneConfiguration("localhost", 6379), clientConfig);
     }
 
-    @Bean
-    ReactiveRedisTemplate<String, String> reactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {
-        return new ReactiveRedisTemplate<>(factory, RedisSerializationContext.string());
+    @Bean(name = "redisTemplate")
+    ReactiveRedisTemplate<String, String> reactiveRedisTemplate(ReactiveRedisConnectionFactory redisConnectionFactory) {
+        return new ReactiveRedisTemplate<>(redisConnectionFactory, RedisSerializationContext.string());
     }
 }
